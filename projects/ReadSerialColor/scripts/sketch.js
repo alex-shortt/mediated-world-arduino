@@ -1,27 +1,96 @@
 var serial;
 let strip;
+let audio;
 let oldVal = 0;
 
 function setup() {
   createCanvas(640, 980);
   strip = new LEDStrip(60, "Strip 1");
   serial = new SerialSelect();
+  audio = new AudioSource("Nohidea - Forgive Me", "assets/forgiveme.mp3");
 }
 
 function draw() {
   background(255);
-  let val = int(map(mouseX, 0, width, 0, 255));
-  if (val !== oldVal) {
-    if (val > 255) val = 255;
-    if (val < 0) val = 0;
-    // serial.write(`<${val},000,000>`);
-    strip.setRGB(val, 0, 0);
-    console.log(`Sent: ${val}, 000, 000`);
-    oldVal = val;
+
+  const spectrum = audio.getSpectrum();
+  // let segmentSize = int(spectrum.length / 60);
+  let avg = 0;
+  for (let i = 0; i < spectrum.length; i++) {
+    avg += spectrum[i];
+  }
+  avg /= spectrum.length;
+  avg = int(avg);
+  strip.setRangeRGB(0, 60, avg, 0, 255 - avg);
+  serial.getSerial().write(`<${avg}, 0, ${255 - avg}>`);
+
+  serial.render(20, 20);
+  strip.render(20, 120);
+  audio.render(20, 200);
+}
+
+class AudioSource {
+  constructor(label, file) {
+    this.file = file;
+    this.label = label;
+    this.fft = new p5.FFT();
+    this.playing = false;
+    this.sound = loadSound(file);
+    this.button = createButton("Play");
+    this.setup();
   }
 
-  strip.render(20, 120);
-  serial.render(20, 20);
+  setup() {
+    const { button } = this;
+    button.mousePressed(() => this.clickButton());
+  }
+
+  clickButton() {
+    const { sound, playing } = this;
+    if (playing) {
+      sound.pause();
+    } else {
+      sound.loop();
+    }
+    this.playing = !playing;
+    this.button.remove();
+    this.button = createButton(!playing ? "Pause" : "Play");
+    this.button.mousePressed(() => this.clickButton());
+  }
+
+  getSpectrum() {
+    return this.fft.analyze();
+  }
+
+  render(x, y) {
+    const { label, button, file, fft } = this;
+
+    // bg & label
+    push();
+    noFill();
+    stroke("black");
+    strokeWeight(4);
+    rect(2, y, width - 4, 65);
+
+    fill("black");
+    noStroke();
+    textSize(14);
+    textStyle(BOLD);
+    text(label, x, y + 20);
+    pop();
+
+    // play / pause
+    button.position(x + 10, y + 40);
+
+    //spectrum
+    let spectrum = fft.analyze();
+    fill("black");
+    for (let i = 0; i < spectrum.length; i++) {
+      let xPos = map(i, 0, spectrum.length, x + 200, width - 20);
+      let h = map(spectrum[i], 0, 255, 0, -35);
+      rect(xPos, y + 60, (width - x - 200 - 20) / spectrum.length, h);
+    }
+  }
 }
 
 class SerialSelect {
@@ -40,12 +109,18 @@ class SerialSelect {
     const { serial, button } = this;
     serial.on("list", ports => this.updatePorts(ports));
     serial.on("connected", () => this.log("Connected to the server."));
-    serial.on("open", () => this.log("The serial port opened."));
+    serial.on("open", () => {
+      this.log("The serial port opened.");
+      this.connected = true;
+    });
     serial.on("data", this.printSerial);
     serial.on("error", () =>
       this.log("Something went wrong with the serial port.")
     );
-    serial.on("close", () => this.log("The serial port closed."));
+    serial.on("close", () => {
+      this.log("The serial port closed.");
+      this.connected = false;
+    });
     serial.list();
     this.button.mousePressed(() => this.clickButton());
   }
@@ -74,8 +149,12 @@ class SerialSelect {
 
   clickButton() {
     const { serial, selectPort } = this;
-    this.button.mousePressed(() => this.clickButton());
+    console.log(selectPort.value());
     serial.open(selectPort.value());
+  }
+
+  getSerial() {
+    return this.serial;
   }
 
   render(x, y) {
@@ -113,19 +192,17 @@ class LEDStrip {
     this.label = label;
     this.numPixels = numPixels;
     this.size = size;
-    this.r = 0;
-    this.g = 0;
-    this.b = 0;
+    this.leds = new Array(numPixels).fill({ r: 0, g: 0, b: 0 });
   }
 
-  setRGB(r, g, b) {
-    this.r = r;
-    this.g = g;
-    this.b = b;
+  setRangeRGB(first, last, r, g, b) {
+    for (let i = first; i <= last; i++) {
+      this.leds[i] = { r, g, b };
+    }
   }
 
   render(x, y) {
-    const { numPixels, size, r, g, b, label } = this;
+    const { numPixels, size, leds, label } = this;
 
     // bg & label
     push();
@@ -145,7 +222,7 @@ class LEDStrip {
       const xOff = size * i;
       push();
       stroke("white");
-      fill(r, g, b);
+      fill(leds[i].r, leds[i].g, leds[i].b);
       rect(x + xOff, y + 29, size, size);
       pop();
     }
