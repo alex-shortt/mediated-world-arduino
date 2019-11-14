@@ -1,20 +1,15 @@
 var serial;
-var portName = "/dev/tty.usbmodem14401";
-
 let strip;
+let oldVal = 0;
 
 function setup() {
-  createCanvas(640, 480);
-  // serial.open(portName); // open a serial port
-  frameRate(40);
-  strip = new LEDStrip(60);
+  createCanvas(640, 980);
+  strip = new LEDStrip(60, "Strip 1");
   serial = new SerialSelect();
 }
 
-let oldVal = 0;
-let sent = false;
 function draw() {
-  background(255); // black background
+  background(255);
   let val = int(map(mouseX, 0, width, 0, 255));
   if (val !== oldVal) {
     if (val > 255) val = 255;
@@ -24,11 +19,13 @@ function draw() {
     console.log(`Sent: ${val}, 000, 000`);
     oldVal = val;
   }
-  strip.render(30, 30);
-  serial.render(20, 420);
+
+  strip.render(20, 120);
+  serial.render(20, 20);
 }
 
 class SerialSelect {
+  // dims: width x 75
   constructor() {
     this.serial = new p5.SerialPort();
     this.message = "";
@@ -58,7 +55,6 @@ class SerialSelect {
       this.selectPort.remove();
     }
     this.selectPort = createSelect();
-    console.log(ports);
     for (const port of ports) {
       this.selectPort.option(port);
     }
@@ -87,7 +83,7 @@ class SerialSelect {
 
     // bg & label
     fill("black");
-    rect(0, y, width, height);
+    rect(0, y, width, 70);
     fill("white");
     textSize(14);
     textStyle(BOLD);
@@ -104,15 +100,17 @@ class SerialSelect {
     // message
     fill("white");
     stroke("white");
-    rect(x + 300, y, 3, height);
-    noStroke()
+    rect(x + 300, y, 3, 70);
+    noStroke();
     textSize(11);
     text(message, x + 325, y + 10, width - (x + 325 + 20));
   }
 }
 
 class LEDStrip {
-  constructor(numPixels, size = 8) {
+  // dims: width x 50
+  constructor(numPixels, label = "Untitled Strip", size = 10) {
+    this.label = label;
     this.numPixels = numPixels;
     this.size = size;
     this.r = 0;
@@ -127,12 +125,28 @@ class LEDStrip {
   }
 
   render(x, y) {
-    const { numPixels, size, r, g, b } = this;
+    const { numPixels, size, r, g, b, label } = this;
+
+    // bg & label
+    push();
+    noFill();
+    stroke("black");
+    strokeWeight(4);
+    rect(2, y, width - 4, 50);
+
+    fill("black");
+    noStroke();
+    textSize(14);
+    textStyle(BOLD);
+    text(label, x, y + 20);
+    pop();
+
     for (let i = 0; i < numPixels; i++) {
       const xOff = size * i;
       push();
+      stroke("white");
       fill(r, g, b);
-      rect(x + xOff, y, size, size);
+      rect(x + xOff, y + 29, size, size);
       pop();
     }
   }
