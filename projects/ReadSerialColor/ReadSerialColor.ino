@@ -4,11 +4,8 @@
 #define DATA_PIN 6
 #define FRAMES_PER_SECOND  120
 
-
-
 // color data
 CRGB leds[NUM_LEDS];
-uint8_t red, green, blue;
 
 // serial collection data
 const byte numChars = 32;
@@ -21,13 +18,11 @@ void setup() {
   Serial.begin(9600);
 }
 
-
 void loop() {
     recvWithStartEndMarkers();
     processData();
-    updateStrip();
     FastLED.show();  
-    FastLED.delay(1000/FRAMES_PER_SECOND);
+//    FastLED.delay(1000/FRAMES_PER_SECOND);
 }
 
 
@@ -66,22 +61,40 @@ void recvWithStartEndMarkers() {
 void processData(){
   if (newData == true) {
         strcpy(tempChars, receivedChars);
+//        Serial.println(tempChars);
+        uint32_t first = getHexAt(tempChars, 1, 2);
+        uint32_t last = getHexAt(tempChars, 3, 2);
+        uint32_t rgb = getHexAt(tempChars, 5, 6);
+        uint32_t alpha = getHexAt(tempChars, 11, 2);
+       
+//        Serial.println("first: " + String(first));
+//        Serial.println("last: " + String(last));
+//        Serial.println("rgb: " + String(rgb));
+//        Serial.println("alpha: " + String(alpha));
 
-        char * strtokIndx; // this is used by strtok() as an index
+        if(last > 59) last = 59;
+        
+        for(int i = first; i <= last; i++) {
+          leds[i].setColorCode(rgb);
+        }
 
-        strtokIndx = strtok(tempChars,",");      
-        red = (uint8_t) atoi(strtokIndx);
-        strtokIndx = strtok(NULL, ","); 
-        green = (uint8_t) atoi(strtokIndx);    
-        strtokIndx = strtok(NULL, ",");
-        blue = (uint8_t) atoi(strtokIndx);
-            
         newData = false;
     }
 }
 
-void updateStrip() { 
-  for( int i = 0; i < NUM_LEDS; i++) {
-    leds[i].setRGB(red, green, blue);
-  }
+uint32_t getHexAt(char message[], int p, int l) {
+    char sub[8] = "0000000";
+    substring(tempChars, sub, p, l);
+    return (uint32_t) strtol(sub, NULL, 16); 
+}
+
+void substring(char s[], char sub[], int p, int l) {
+   int c = 0;
+   
+   while (c < l) {
+      sub[c] = s[p+c-1];
+      c++;
+   }
+
+   sub[c] = '\0';
 }
