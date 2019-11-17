@@ -36,10 +36,10 @@ void processData(){
         uint8_t saturation = getHexAt(tempChars, 4, 2);
         uint8_t value = getHexAt(tempChars, 6, 2);
 
-        Serial.println("strip index: " + String(stripIndex));
-        Serial.println("hue: " + String(hue));
-        Serial.println("saturation: " + String(saturation));
-        Serial.println("value: " + String(value));
+//        Serial.println("strip index: " + String(stripIndex));
+//        Serial.println("hue: " + String(hue));
+//        Serial.println("saturation: " + String(saturation));
+//        Serial.println("value: " + String(value));
 
         if(stripIndex >= 0 && stripIndex < NUM_STRIPS){
           for(uint8_t i = 0; i < NUM_LEDS_PER_STRIP; i++){

@@ -4,52 +4,32 @@ let audio;
 
 function setup() {
   createCanvas(640, 980);
+  colorMode(HSB, 255);
   strip = new LEDStrip(60, "Strip 1");
   serial = new SerialSelect();
-  audio = new AudioSource("Nohidea - Forgive Me", "assets/forgiveme.mp3");
+  audio = new AudioSource();
 }
 
 function draw() {
   background(255);
 
-  const spectrum = audio.getSpectrum();
-  let pixelGroupSize = 30;
-  let segmentSize = int(spectrum.length / pixelGroupSize);
-  for (let x = 0; x < 2; x++) {
-    let avg = 0;
-    for (let i = 0; i < segmentSize; i++) {
-      avg += spectrum[x * segmentSize + i];
-    }
-    avg /= segmentSize;
+  const bassEnergy = audio.getEnergy("bass");
+  const midEnergy = audio.getEnergy("mid");
+  const highEnergy = audio.getEnergy("treble");
 
-    let h = (sin(frameCount * 0.003 + x / pixelGroupSize) + 1) / 2;
-    let s = 1;
-    let b = avg / 255;
+  let h = map(sin(frameCount * 0.002), -1, 1, 0, 255);
+  let s = 255;
+  let v = midEnergy;
 
-    // console.log(h, s, b)
-    const rgb = HSVtoRGB(h, s, b);
+  strip.setHSV(h, s, v);
 
-    strip.setRangeRGB(
-      x * pixelGroupSize,
-      x * pixelGroupSize + pixelGroupSize - 1,
-      rgb.r,
-      rgb.g,
-      rgb.b
-    );
+  let hexStripIndex = paddedDecToHex(0, 1)
+  let hexH = paddedDecToHex(int(h))
+  let hexS = paddedDecToHex(int(s))
+  let hexV = paddedDecToHex(int(v))
 
-    // console.log(`${rgb.r},${rgb.g},${rgb.b}`)
-
-    const hexFirst = paddedDecToHex(x * pixelGroupSize);
-    const hexLast = paddedDecToHex(x * pixelGroupSize + pixelGroupSize - 1);
-    const hexRGB = {
-      r: paddedDecToHex(rgb.r),
-      g: paddedDecToHex(rgb.g),
-      b: paddedDecToHex(rgb.b)
-    };
-
-    const message = `<${hexFirst}${hexLast}${hexRGB.r}${hexRGB.g}${hexRGB.b}ff>`;
-    serial.getSerial().write(message);
-  }
+  const message = `<${hexStripIndex}${hexH}${hexS}${hexV}>`;
+  serial.getSerial().write(message);
 
   serial.render(20, 20);
   strip.render(20, 120);
@@ -61,40 +41,26 @@ function paddedDecToHex(val, numPad = 2) {
 }
 
 class AudioSource {
-  constructor(label, file) {
-    this.file = file;
+  constructor(label = "Microphone Input") {
+    this.mic = new p5.AudioIn(0.8);
     this.label = label;
     this.fft = new p5.FFT();
     this.playing = false;
-    this.sound = loadSound(file);
-    this.button = createButton("Play");
     this.setup();
   }
 
   setup() {
-    const { button } = this;
-    button.mousePressed(() => this.clickButton());
+    const { mic, fft } = this;
+    mic.start();
+    fft.setInput(mic);
   }
 
-  clickButton() {
-    const { sound, playing } = this;
-    if (playing) {
-      sound.pause();
-    } else {
-      sound.loop();
-    }
-    this.playing = !playing;
-    this.button.remove();
-    this.button = createButton(!playing ? "Pause" : "Play");
-    this.button.mousePressed(() => this.clickButton());
-  }
-
-  getSpectrum() {
-    return this.fft.analyze();
+  getEnergy(arg) {
+    return this.fft.getEnergy(arg);
   }
 
   render(x, y) {
-    const { label, button, file, fft } = this;
+    const { label, file, fft } = this;
 
     // bg & label
     push();
@@ -109,9 +75,6 @@ class AudioSource {
     textStyle(BOLD);
     text(label, x, y + 20);
     pop();
-
-    // play / pause
-    button.position(x + 10, y + 40);
 
     //spectrum
     let spectrum = fft.analyze();
@@ -220,16 +183,19 @@ class SerialSelect {
 
 class LEDStrip {
   // dims: width x 50
+  // make sure color mode is set to hsb
   constructor(numPixels, label = "Untitled Strip", size = 10) {
     this.label = label;
     this.numPixels = numPixels;
     this.size = size;
-    this.leds = new Array(numPixels).fill({ r: 0, g: 0, b: 0 });
+    this.leds = new Array(numPixels).fill({ h: 0, s: 0, v: 0 });
   }
 
-  setRangeRGB(first, last, r, g, b) {
-    for (let i = first; i <= last; i++) {
-      this.leds[i] = { r, g, b };
+  setHSV(h, s, v) {
+    const { numPixels } = this
+
+    for (let i = 0; i <= numPixels; i++) {
+      this.leds[i] = { h, s, v };
     }
   }
 
@@ -254,46 +220,9 @@ class LEDStrip {
       const xOff = size * i;
       push();
       stroke("white");
-      fill(leds[i].r, leds[i].g, leds[i].b);
+      fill(leds[i].h, leds[i].s, leds[i].v);
       rect(x + xOff, y + 29, size, size);
       pop();
     }
   }
-}
-
-function HSVtoRGB(h, s, v) {
-  var r, g, b, i, f, p, q, t;
-  if (arguments.length === 1) {
-    (s = h.s), (v = h.v), (h = h.h);
-  }
-  i = Math.floor(h * 6);
-  f = h * 6 - i;
-  p = v * (1 - s);
-  q = v * (1 - f * s);
-  t = v * (1 - (1 - f) * s);
-  switch (i % 6) {
-    case 0:
-      (r = v), (g = t), (b = p);
-      break;
-    case 1:
-      (r = q), (g = v), (b = p);
-      break;
-    case 2:
-      (r = p), (g = v), (b = t);
-      break;
-    case 3:
-      (r = p), (g = q), (b = v);
-      break;
-    case 4:
-      (r = t), (g = p), (b = v);
-      break;
-    case 5:
-      (r = v), (g = p), (b = q);
-      break;
-  }
-  return {
-    r: Math.round(r * 255),
-    g: Math.round(g * 255),
-    b: Math.round(b * 255)
-  };
 }
