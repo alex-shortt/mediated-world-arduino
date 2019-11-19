@@ -28,31 +28,31 @@ void draw() {
 
   ArrayList<Blob> currentBlobs = new ArrayList<Blob>();
 
-  for (int x = 0; x < kinect2.depthWidth; x++) {
-    for (int y = 0; y < kinect2.depthHeight; y++) {
-      int offset = x + y * kinect2.depthWidth;
-      int d = depth[offset];
+  //for (int x = 0; x < kinect2.depthWidth; x++) {
+  //  for (int y = 0; y < kinect2.depthHeight; y++) {
+  //    int offset = x + y * kinect2.depthWidth;
+  //    int d = depth[offset];
       
-      if(d > minDepth && d < maxDepth){
-        img.pixels[offset] = color(255, 0);
-        boolean found = false;
-        for (Blob b : currentBlobs) {
-          if (b.isNear(x, y)) {
-            b.add(x, y);
-            found = true;
-            break;
-          }
-        }
+  //    if(d > minDepth && d < maxDepth){
+  //      img.pixels[offset] = color(255, 0);
+  //      boolean found = false;
+  //      for (Blob b : currentBlobs) {
+  //        if (b.isNear(x, y)) {
+  //          b.add(x, y);
+  //          found = true;
+  //          break;
+  //        }
+  //      }
 
-        if (!found) {
-          Blob b = new Blob(x, y);
-          currentBlobs.add(b);
-        }
-      } else {
-        img.pixels[offset] = 0;  
-      }
-    }
-  }
+  //      if (!found) {
+  //        Blob b = new Blob(x, y);
+  //        currentBlobs.add(b);
+  //      }
+  //    } else {
+  //      img.pixels[offset] = 0;  
+  //    }
+  //  }
+  //}
    
   img.updatePixels();
   image(img, 0, 0); 

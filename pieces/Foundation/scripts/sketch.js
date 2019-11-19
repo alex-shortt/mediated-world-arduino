@@ -19,7 +19,7 @@ function draw() {
 
   let h = map(sin(frameCount * 0.002), -1, 1, 0, 255);
   let s = 255;
-  let v = midEnergy;
+  let v = highEnergy;
 
   strip.setHSV(h, s, v);
 
