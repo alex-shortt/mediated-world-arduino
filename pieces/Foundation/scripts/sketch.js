@@ -1,33 +1,49 @@
 var serial;
 let audio;
+let ledControl;
 
 let bassGraph;
 let midGraph;
 let trebleGraph;
+let lowMidGraph;
+let highMidGraph;
 
 function setup() {
   createCanvas(640, 980);
   colorMode(HSB, 255);
+
+  ledControl = new LEDControl();
   serial = new SerialSelect();
   audio = new AudioSource();
+
   bassGraph = new Graph("Bass");
+  lowMidGraph = new Graph("Low Mid");
   midGraph = new Graph("Mid");
+  highMidGraph = new Graph("High Mid");
   trebleGraph = new Graph("Treble");
 }
 
 function draw() {
   background(255);
 
+  noStroke();
+  fill("black");
+  textSize(24);
+  textStyle(BOLD);
+  text("Foundation", 240, 30);
+
   const bassEnergy = audio.getEnergy("bass");
+  const lowMidEnergy = audio.getEnergy("lowMid");
   const midEnergy = audio.getEnergy("mid");
-  const highEnergy = audio.getEnergy("treble");
+  const highMidEnergy = audio.getEnergy("highMid");
+  const trebleEnergy = audio.getEnergy("treble");
 
   let h = map(sin(frameCount * 0.002), -1, 1, 0, 255);
   let s = 255;
 
-  let v0 = bassEnergy;
-  let v1 = midEnergy;
-  let v2 = highEnergy;
+  let v0 = audio.getEnergy(ledControl.getValue(1));
+  let v1 = audio.getEnergy(ledControl.getValue(2));
+  let v2 = audio.getEnergy(ledControl.getValue(3));
 
   let hexH = paddedDecToHex(int(h));
   let hexS = paddedDecToHex(int(s));
@@ -37,18 +53,21 @@ function draw() {
   let hexV2 = paddedDecToHex(int(v2));
 
   serial.getSerial().write(`<${hexV0}${hexV2}${hexV0}>`);
-  // serial.getSerial().write(`<1${hexH}${hexS}${hexV1}>`);
-  // serial.getSerial().write(`<2${hexH}${hexS}${hexV2}>`);
 
-  bassGraph.graphValue(v0);
-  midGraph.graphValue(v1);
-  trebleGraph.graphValue(v2);
+  bassGraph.graphValue(bassEnergy);
+  lowMidGraph.graphValue(lowMidEnergy);
+  midGraph.graphValue(midEnergy);
+  highMidGraph.graphValue(highMidEnergy);
+  trebleGraph.graphValue(trebleEnergy);
 
-  serial.render(20, 20);
-  audio.render(20, 110);
-  bassGraph.render(20, 200);
-  midGraph.render(20, 300);
-  trebleGraph.render(20, 400);
+  serial.render(20, 60);
+  audio.render(20, 150);
+  ledControl.render(20, 240);
+  bassGraph.render(20, 330);
+  lowMidGraph.render(20, 430);
+  midGraph.render(20, 530);
+  highMidGraph.render(20, 630);
+  trebleGraph.render(20, 730);
 }
 
 function paddedDecToHex(val, numPad = 2) {
@@ -237,5 +256,65 @@ class Graph {
       let yf = map(values[i + 1], min, max, y + 75, y + 5);
       line(xi, yi, xf, yf);
     }
+  }
+}
+
+class LEDControl {
+  // height of 65
+  constructor() {
+    this.valueOne = createSelect();
+    this.valueTwo = createSelect();
+    this.valueThree = createSelect();
+    this.setup();
+  }
+
+  setup() {
+    let options = ["bass", "lowMid", "mid", "highMid", "treble"];
+    for (const option of options) {
+      this.valueOne.option(option);
+      this.valueTwo.option(option);
+      this.valueThree.option(option);
+    }
+  }
+
+  getValue(index) {
+    if (index === 1) {
+      return this.valueOne.value();
+    } else if (index === 2) {
+      return this.valueTwo.value();
+    } else {
+      return this.valueThree.value();
+    }
+  }
+
+  render(x, y) {
+    const { valueOne, valueTwo, valueThree } = this;
+
+    // bg & label
+    push();
+    noFill();
+    stroke("black");
+    strokeWeight(4);
+    rect(2, y, width - 4, 65);
+
+    fill("black");
+    noStroke();
+    textSize(14);
+    textStyle(BOLD);
+    text("LED Control", x, y + 20);
+    pop();
+
+    fill("black");
+    noStroke();
+    textSize(12);
+
+    text("One", x + 200 - 5, y + 25);
+    valueOne.position(x + 200, y + 42);
+
+    text("Two", x + 300 - 5, y + 25);
+    valueTwo.position(x + 300, y + 42);
+
+    text("Three", x + 400 - 5, y + 25);
+    valueThree.position(x + 400, y + 42);
   }
 }
