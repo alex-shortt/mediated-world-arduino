@@ -1,13 +1,18 @@
 var serial;
-let strip;
 let audio;
+
+let bassGraph;
+let midGraph;
+let trebleGraph;
 
 function setup() {
   createCanvas(640, 980);
   colorMode(HSB, 255);
-  strip = new LEDStrip(60, "Strip 1");
   serial = new SerialSelect();
   audio = new AudioSource();
+  bassGraph = new Graph("Bass");
+  midGraph = new Graph("Mid");
+  trebleGraph = new Graph("Treble");
 }
 
 function draw() {
@@ -24,24 +29,26 @@ function draw() {
   let v1 = midEnergy;
   let v2 = highEnergy;
 
-  strip.setHSV(h, s, v0);
+  let hexH = paddedDecToHex(int(h));
+  let hexS = paddedDecToHex(int(s));
 
-  let hexH = paddedDecToHex(int(h))
-  let hexS = paddedDecToHex(int(s))
+  let hexV0 = paddedDecToHex(int(v0));
+  let hexV1 = paddedDecToHex(int(v1));
+  let hexV2 = paddedDecToHex(int(v2));
 
-  let hexV0 = paddedDecToHex(int(v0))
-  let hexV1 = paddedDecToHex(int(v1))
-  let hexV2 = paddedDecToHex(int(v2))
-
-  console.log(`<${hexV0}${hexV1}${hexV0}>`)
-
-  serial.getSerial().write(`<${hexV0}${hexV1}${hexV0}>`);
+  serial.getSerial().write(`<${hexV0}${hexV2}${hexV0}>`);
   // serial.getSerial().write(`<1${hexH}${hexS}${hexV1}>`);
   // serial.getSerial().write(`<2${hexH}${hexS}${hexV2}>`);
 
+  bassGraph.graphValue(v0);
+  midGraph.graphValue(v1);
+  trebleGraph.graphValue(v2);
+
   serial.render(20, 20);
-  strip.render(20, 120);
-  audio.render(20, 200);
+  audio.render(20, 110);
+  bassGraph.render(20, 200);
+  midGraph.render(20, 300);
+  trebleGraph.render(20, 400);
 }
 
 function paddedDecToHex(val, numPad = 2) {
@@ -88,7 +95,7 @@ class AudioSource {
     let spectrum = fft.analyze();
     fill("black");
     for (let i = 0; i < spectrum.length; i++) {
-      let xPos = map(i, 0, spectrum.length, x + 200, width - 20);
+      let xPos = map(i, 0, spectrum.length, x + 200, width - x);
       let h = map(spectrum[i], 0, 255, 0, -35);
       rect(xPos, y + 60, (width - x - 200 - 20) / spectrum.length, h);
     }
@@ -189,33 +196,31 @@ class SerialSelect {
   }
 }
 
-class LEDStrip {
+class Graph {
   // dims: width x 50
-  // make sure color mode is set to hsb
-  constructor(numPixels, label = "Untitled Strip", size = 10) {
+  constructor(label = "Untitled Graph", min = 0, max = 255) {
+    this.values = new Array(300).fill(0);
+    this.min = min;
+    this.max = max;
     this.label = label;
-    this.numPixels = numPixels;
-    this.size = size;
-    this.leds = new Array(numPixels).fill({ h: 0, s: 0, v: 0 });
   }
 
-  setHSV(h, s, v) {
-    const { numPixels } = this
+  graphValue(val) {
+    const { values } = this;
 
-    for (let i = 0; i <= numPixels; i++) {
-      this.leds[i] = { h, s, v };
-    }
+    values.push(val);
+    values.shift();
   }
 
   render(x, y) {
-    const { numPixels, size, leds, label } = this;
+    const { values, label, min, max } = this;
 
     // bg & label
     push();
     noFill();
     stroke("black");
     strokeWeight(4);
-    rect(2, y, width - 4, 50);
+    rect(2, y, width - 4, 80);
 
     fill("black");
     noStroke();
@@ -224,13 +229,13 @@ class LEDStrip {
     text(label, x, y + 20);
     pop();
 
-    for (let i = 0; i < numPixels; i++) {
-      const xOff = size * i;
-      push();
-      stroke("white");
-      fill(leds[i].h, leds[i].s, leds[i].v);
-      rect(x + xOff, y + 29, size, size);
-      pop();
+    stroke("black");
+    for (let i = 0; i < values.length - 1; i++) {
+      let xi = map(i, 0, values.length, x + 200, width - x);
+      let yi = map(values[i], min, max, y + 75, y + 5);
+      let xf = map(i + 1, 0, values.length, x + 200, width - x);
+      let yf = map(values[i + 1], min, max, y + 75, y + 5);
+      line(xi, yi, xf, yf);
     }
   }
 }
