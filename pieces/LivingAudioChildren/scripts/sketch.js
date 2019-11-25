@@ -28,6 +28,7 @@ function setup() {
   amp = new p5.Amplitude(0.8)
   fft = new p5.FFT();
   fft.setInput(mic);
+  colorMode(HSB)
 
   for (let x = 0; x < numBoxes; x++) {
     boxesX.push([])
@@ -45,7 +46,7 @@ function setup() {
 }
 
 function draw() {
-  background(255);
+  background(0);
   let level = mic.getLevel(0.4);
   rotateY(frameCount * 0.002);
   rotateX(frameCount * 0.002);
@@ -113,11 +114,11 @@ class Box {
     //color
     const energy = map(this.energy, 0, 255, 0, 100)
     const s = 90
-    const l = parseInt(map(energy, 0, 100, 5, 95))
+    const v = parseInt(map(energy, 0, 100, 5, 95))
     const sizeColorMod = 0.01 * this.x * this.y * this.z
-    //const deltaColorMod = abs(this.deltaEnergy) * 0.025
-    const h = map(sin(this.rot + sizeColorMod + deltaColorMod), -1, 1, 0, 255)
-    fill(color(`hsla(${parseInt(h)}, ${s}%, ${l}%, 1)`))
+    const deltaColorMod = abs(this.deltaEnergy) * 0.025
+    const h = map(sin(this.rot + sizeColorMod + deltaColorMod), -1, 1, 0, 360)
+    fill(color(parseInt(h), s, v))
     strokeWeight(2);
 
     //rotate
