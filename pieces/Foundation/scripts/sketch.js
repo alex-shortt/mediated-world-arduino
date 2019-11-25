@@ -19,17 +19,25 @@ function draw() {
 
   let h = map(sin(frameCount * 0.002), -1, 1, 0, 255);
   let s = 255;
-  let v = highEnergy;
 
-  strip.setHSV(h, s, v);
+  let v0 = bassEnergy;
+  let v1 = midEnergy;
+  let v2 = highEnergy;
 
-  let hexStripIndex = paddedDecToHex(0, 1)
+  strip.setHSV(h, s, v0);
+
   let hexH = paddedDecToHex(int(h))
   let hexS = paddedDecToHex(int(s))
-  let hexV = paddedDecToHex(int(v))
 
-  const message = `<${hexStripIndex}${hexH}${hexS}${hexV}>`;
-  serial.getSerial().write(message);
+  let hexV0 = paddedDecToHex(int(v0))
+  let hexV1 = paddedDecToHex(int(v1))
+  let hexV2 = paddedDecToHex(int(v2))
+
+  console.log(`<${hexV0}${hexV1}${hexV0}>`)
+
+  serial.getSerial().write(`<${hexV0}${hexV1}${hexV0}>`);
+  // serial.getSerial().write(`<1${hexH}${hexS}${hexV1}>`);
+  // serial.getSerial().write(`<2${hexH}${hexS}${hexV2}>`);
 
   serial.render(20, 20);
   strip.render(20, 120);

@@ -1,12 +1,14 @@
+#define FASTLED_ALLOW_INTERRUPTS 0
 #include <FastLED.h>
 
 // project data
 #define FRAMES_PER_SECOND  120
 
 // led strips data
-#define NUM_STRIPS 1
+#define NUM_STRIPS 3
 #define NUM_LEDS_PER_STRIP 60
 CRGB leds[NUM_STRIPS][NUM_LEDS_PER_STRIP];
+uint8_t gHue = 0;
 
 // data collection
 const byte numChars = 32;
@@ -15,7 +17,9 @@ char tempChars[numChars];
 boolean newData = false;
 
 void setup() {
-  FastLED.addLeds<NEOPIXEL, 6>(leds[0], NUM_LEDS_PER_STRIP);
+  FastLED.addLeds<NEOPIXEL, 3>(leds[0], NUM_LEDS_PER_STRIP);
+  FastLED.addLeds<NEOPIXEL, 5>(leds[1], NUM_LEDS_PER_STRIP);
+  FastLED.addLeds<NEOPIXEL, 6>(leds[2], NUM_LEDS_PER_STRIP);
   Serial.begin(9600);
 }
 
@@ -24,29 +28,29 @@ void loop() {
     processData();
     FastLED.show();
     FastLED.delay(1000/FRAMES_PER_SECOND);
+    EVERY_N_MILLISECONDS( 200 ) { gHue++; }
 }
 
 void processData(){
   if (newData == true) {
         strcpy(tempChars, receivedChars);
         
-        // data format: <NHHSSVV>
-        uint8_t stripIndex = (uint8_t) getHexAt(tempChars, 1, 1);
-        uint8_t hue = getHexAt(tempChars, 2, 2);
-        uint8_t saturation = getHexAt(tempChars, 4, 2);
-        uint8_t value = getHexAt(tempChars, 6, 2);
+        // data format: <001122>
+        uint8_t firstVal = getHexAt(tempChars, 1, 2);
+        uint8_t secondVal = getHexAt(tempChars, 3, 2);
+        uint8_t thirdVal = getHexAt(tempChars, 5, 2);
 
-//        Serial.println("strip index: " + String(stripIndex));
-//        Serial.println("hue: " + String(hue));
-//        Serial.println("saturation: " + String(saturation));
-//        Serial.println("value: " + String(value));
+        for(byte i = 0; i < NUM_LEDS_PER_STRIP; i++){
+          leds[0][i].setHSV(gHue, 255, 255);
+          leds[0][i].nscale8_video(firstVal);
 
-        if(stripIndex >= 0 && stripIndex < NUM_STRIPS){
-          for(uint8_t i = 0; i < NUM_LEDS_PER_STRIP; i++){
-            leds[stripIndex][i].setHSV(hue, saturation, value);  
-          } 
-        }
+          leds[1][i].setHSV(gHue, 255, 255);  
+          leds[1][i].nscale8_video(secondVal);
 
+          leds[2][i].setHSV(gHue, 255, 255);  
+          leds[2][i].nscale8_video(thirdVal); 
+        } 
+        
         newData = false;
     }
 }
