@@ -46,7 +46,7 @@ function setup() {
 }
 
 function draw() {
-  background(0);
+  background(255);
   let level = mic.getLevel(0.4);
   rotateY(frameCount * 0.002);
   rotateX(frameCount * 0.002);
