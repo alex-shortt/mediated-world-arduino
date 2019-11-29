@@ -52,7 +52,7 @@ function draw() {
   let hexV1 = paddedDecToHex(int(v1));
   let hexV2 = paddedDecToHex(int(v2));
 
-  serial.getSerial().write(`<${hexV0}${hexV2}${hexV0}>`);
+  serial.getSerial().write(`<${hexV0}${hexV1}${hexV2}>`);
 
   bassGraph.graphValue(bassEnergy);
   lowMidGraph.graphValue(lowMidEnergy);
