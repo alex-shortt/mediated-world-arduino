@@ -1,3 +1,5 @@
+import java.util.*; 
+
 class Blob {
   float minx;
   float miny;
@@ -7,15 +9,28 @@ class Blob {
   ArrayList<PVector> points;
   int id = 0;
   
+  MiniPID miniPID; 
+  float movedTarget = 0;
+  float movedActual = 0;
+  PVector center;
+  
   boolean taken = false;
 
-  Blob(float x, float y) {
+  Blob(float x, float y, float z) {
     minx = x;
     miny = y;
     maxx = x;
     maxy = y;
+    
     points = new ArrayList<PVector>();
-    points.add(new PVector(x, y));
+    points.add(new PVector(x, y, z));
+    center = this.getCenter();
+    
+    miniPID = new MiniPID(0.1, 0.01, 0.2);
+    miniPID.setOutputLimits(255);
+    miniPID.setSetpointRange(100);
+    miniPID.setSetpoint(movedTarget);
+    miniPID.setOutputFilter(5);
   }
     
   void show(int x, int y) {
@@ -35,8 +50,8 @@ class Blob {
   }
 
 
-  void add(float x, float y) {
-    points.add(new PVector(x, y));
+  void add(float x, float y, float z) {
+    points.add(new PVector(x, y, z));
     minx = min(minx, x);
     miny = min(miny, y);
     maxx = max(maxx, x);
@@ -44,10 +59,18 @@ class Blob {
   }
   
   void become(Blob other) {
+    float moveDelta = center.dist(other.center);
+    if(moveDelta > 30){
+      movedTarget += moveDelta;
+    }
+    center = other.center;
+    
     minx = other.minx;
     maxx = other.maxx;
     miny = other.miny;
     maxy = other.maxy;
+    
+    points = other.points;
   }
 
   float size() {
@@ -63,6 +86,12 @@ class Blob {
     float y = (maxy - miny)* 0.5 + miny;    
     return new PVector(x,y); 
   }
+  
+  float popDist(){
+    double output = miniPID.getOutput(movedActual, movedTarget);
+    movedActual += output;
+    return (float) output;
+  }
 
   boolean isNear(float x, float y, int threshold) {
     float cx = max(min(x, maxx), minx);
@@ -74,6 +103,14 @@ class Blob {
     } else {
       return false;
     }
+  }
+  
+  float getAverageDepth() {
+    float sum = 0;
+    for(PVector point : points){
+      sum += point.z;
+    }
+    return sum / points.size();
   }
 }
 

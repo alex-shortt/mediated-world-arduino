@@ -8,7 +8,7 @@ class KinectBlobHandler {
   int blobCounter = 0;
   ArrayList<Blob> blobs;
   ArrayList<Blob> tempBlobs;
-  int DEPTH_THRESHOLD = 30;
+  int DEPTH_THRESHOLD = 20;
   
   PImage img;
   
@@ -25,6 +25,18 @@ class KinectBlobHandler {
   
   PImage getDepthImage(){
     return img;
+  }
+  
+  ArrayList<Blob> getBlobs(){
+    return blobs;
+  }
+  
+  int getHeight(){
+    return kinect2.depthHeight;
+  }
+  
+  int getWidth(){
+    return kinect2.depthWidth;
   }
   
   void render(int x, int y){
@@ -70,14 +82,14 @@ class KinectBlobHandler {
           boolean found = false;
           for (Blob b : tempBlobs) {
             if (b.isNear(x, y, DEPTH_THRESHOLD)) {
-              b.add(x, y);
+              b.add(x, y, d);
               found = true;
               break;
             }
           }
   
           if (!found) {
-            Blob b = new Blob(x, y);
+            Blob b = new Blob(x, y, d);
             tempBlobs.add(b);
           }
         } else {
