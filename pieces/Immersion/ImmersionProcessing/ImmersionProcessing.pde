@@ -33,9 +33,10 @@ void draw() {
   String message = processBlobData(kinectBlob.getBlobs());
   textSize(20);
   fill(color(255, 0, 0));
-  //text(message, 250, 580);
-  //serial.write(message);
+  text(message, 250, 580);
+  serial.write(message);
   
+  // kp / ki values
   text("kp: " + kp, 70, 625);
   text("ki: " + ki, 70, 650);
   text("kd: " + kd, 70, 675);
@@ -63,6 +64,7 @@ String processBlobData(ArrayList<Blob> blobs){
     return "<0>";
   }
   
+  // find the biggeset blob
   Blob biggestBlob = blobs.get(0);
   for(Blob b : blobs) {
     if(b.size() > biggestBlob.size()){
@@ -75,32 +77,24 @@ String processBlobData(ArrayList<Blob> blobs){
   int kinectWidth = kinectBlob.getWidth();
   int kinectHeight = kinectBlob.getHeight();
   float avgDepth = biggestBlob.getAverageDepth();
-  PVector a = new PVector(0, kinectHeight, 0);
-  PVector b = new PVector(kinectWidth, 0, 0);
-  float maxDist = a.dist(b);
+  float pop = biggestBlob.popDist();
   
   // map variables
   int id = biggestBlob.id % 16;
   int x = int(map(center.x, 0, kinectWidth, 0, 255));
   int y = int(map(center.y, 0, kinectHeight, 0, 255));
   int depth = int(map(avgDepth, kinectBlob.MIN_DEPTH, kinectBlob.MAX_DEPTH, 0, 255));
-  //int posDelta = int(map(distMoved, 0, maxDist, 0, 255));
+  int movement = int(map(min(pop, 16), 0, 16, 0, 255));
   
   // encode variables
   String idHex = String.format("%01X", id);
   String xHex = String.format("%02X", x);
   String yHex = String.format("%02X", y);
   String depthHex = String.format("%02X", depth);
-  //String posDeltaHex = String.format("%02X", posDelta);
+  String movementHex = String.format("%02X", movement);
   
-  float pop = biggestBlob.popDist();
-  if(pop > maxOutput) {
-    maxOutput = pop;
-    println(pop);
-  }
   int mappedPop = int(map(pop, 0, 100, 0, kinectWidth));
   rect(70, 570, mappedPop, 20);
    
-  return "";
-  //return "<" + idHex + xHex + yHex + depthHex + posDeltaHex + ">";
-} //<>//
+  return "<" + idHex + xHex + yHex + depthHex + movementHex + ">";
+}

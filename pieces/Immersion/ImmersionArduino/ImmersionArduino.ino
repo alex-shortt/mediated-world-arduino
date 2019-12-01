@@ -3,10 +3,19 @@
 // project data
 #define FRAMES_PER_SECOND  120
 
-// led strips data
-#define NUM_STRIPS 1
-#define NUM_LEDS_PER_STRIP 60
-CRGB leds[NUM_STRIPS][NUM_LEDS_PER_STRIP];
+// Strip C
+#define LEN3 59
+CRGB leds3[LEN3]; 
+
+// Strip B
+#define LEN5 60
+CRGB leds5[LEN5]; 
+
+// Strip A
+#define LEN6 59
+CRGB leds6[LEN6]; 
+
+uint8_t gHue = 0;
 
 // data collection
 const byte numChars = 32;
@@ -14,11 +23,10 @@ char receivedChars[numChars];
 char tempChars[numChars];
 boolean newData = false;
 
-// blob data
-const uint8_t LED_DIST = 5;
-
 void setup() {
-  FastLED.addLeds<NEOPIXEL, 6>(leds[0], NUM_LEDS_PER_STRIP);
+  FastLED.addLeds<NEOPIXEL, 3>(leds3, LEN3);
+  FastLED.addLeds<NEOPIXEL, 5>(leds5, LEN5);
+  FastLED.addLeds<NEOPIXEL, 6>(leds6, LEN6);
   Serial.begin(9600);
 }
 
@@ -27,43 +35,46 @@ void loop() {
     processData();
     FastLED.show();
     FastLED.delay(1000/FRAMES_PER_SECOND);
+    EVERY_N_MILLISECONDS( 200 ) { gHue++; }
 }
 
 void processData(){
   if (newData == true) {
         strcpy(tempChars, receivedChars);
 
-        // data format: <ILLDD>
-        uint8_t blobId = getHexAt(tempChars, 1, 1);
-        uint8_t left = getHexAt(tempChars, 2, 2);
-        uint8_t depth = getHexAt(tempChars, 4, 2);
-
-//        Serial.println("blob id: " + String(blobId));
-//        Serial.println("left: " + String(left));
-//        Serial.println("depth: " + String(depth));
-
-        uint8_t hue = (uint8_t) map(sin(millis() * 0.01), -1, 1, 0, 255);
-    
-//        for(uint8_t i = 0; i < NUM_LEDS_PER_STRIP; i++){
-//          leds[0][i].setHSV(0, 0, 0);
-//        }    
-
-
-        uint8_t centerLED = (uint8_t) map(left, 0, 255, 0, 60);
-        for(uint8_t i = 0; i < NUM_LEDS_PER_STRIP; i++){
-          uint8_t thisHue = (hue - blobId) % 255;
-          uint8_t saturation = depth;
-          uint8_t value;
-
-          uint8_t ledDist = abs(centerLED - i);
-          if(ledDist > LED_DIST){
-            value = 0;
-          } else {
-            value = (uint8_t) map(ledDist, 0, LED_DIST, 255, 0);
-          }
-          leds[0][i].setHSV(thisHue, saturation, value);
+        byte c = 0;
+        while (tempChars[c] != '\0') {
+          c++;
         }
 
+        // make sure there's no data loss
+        if(c == 1) {
+          
+        } else if(c == 9){
+          // data format: <IXXYYDDMM>
+          uint8_t id = getHexAt(tempChars, 1, 1);
+          uint8_t x = getHexAt(tempChars, 2, 2);
+          uint8_t y = getHexAt(tempChars, 4, 2);
+          uint8_t depth = getHexAt(tempChars, 6, 2);
+          uint8_t movement = getHexAt(tempChars, 8, 2);
+
+          uint8_t hue = int(gHue + (id * 1.5));
+          uint8_t saturation = x;
+          uint8_t brightness = movement;
+  
+          for(byte i = 0; i < LEN3; i++){
+            leds3[i].setHSV(hue, saturation, brightness);
+          } 
+  
+          for(byte i = 0; i < LEN5; i++){
+            leds5[i].setHSV(hue, saturation, brightness);
+          } 
+  
+          for(byte i = 0; i < LEN6; i++){
+            leds6[i].setHSV(hue, saturation, brightness);
+          }
+        }
+        
         newData = false;
     }
 }
