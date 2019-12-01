@@ -5,7 +5,7 @@ SerialSelect serial;
 ControlP5 cp5;
 KinectBlobHandler kinectBlob;
 
-float kp = 0.045;
+float kp = 0.124;
 float ki = 0.011;
 float kd = 0.27;
 
@@ -77,14 +77,14 @@ String processBlobData(ArrayList<Blob> blobs){
   int kinectWidth = kinectBlob.getWidth();
   int kinectHeight = kinectBlob.getHeight();
   float avgDepth = biggestBlob.getAverageDepth();
-  float pop = biggestBlob.popDist();
+  float move = constrain(map(biggestBlob.getMovement(), 10, 60, 0, 100), 0, 100);
   
   // map variables
   int id = biggestBlob.id % 16;
   int x = int(map(center.x, 0, kinectWidth, 0, 255));
   int y = int(map(center.y, 0, kinectHeight, 0, 255));
   int depth = int(map(avgDepth, kinectBlob.MIN_DEPTH, kinectBlob.MAX_DEPTH, 0, 255));
-  int movement = int(map(min(pop, 16), 0, 16, 0, 255));
+  int movement = int(map(move, 0, 100, 0, 255));
   
   // encode variables
   String idHex = String.format("%01X", id);
@@ -93,7 +93,7 @@ String processBlobData(ArrayList<Blob> blobs){
   String depthHex = String.format("%02X", depth);
   String movementHex = String.format("%02X", movement);
   
-  int mappedPop = int(map(pop, 0, 100, 0, kinectWidth));
+  int mappedPop = int(map(move, 0, 100, 0, kinectWidth));
   rect(70, 570, mappedPop, 20);
    
   return "<" + idHex + xHex + yHex + depthHex + movementHex + ">";

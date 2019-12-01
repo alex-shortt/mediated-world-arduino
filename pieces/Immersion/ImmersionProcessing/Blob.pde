@@ -14,6 +14,8 @@ class Blob {
   float movedActual = 0;
   PVector center;
   
+  float maxShift = 0;
+  
   boolean taken = false;
 
   Blob(float x, float y, float z) {
@@ -29,8 +31,7 @@ class Blob {
     miniPID = new MiniPID(kp, ki, kd);
     miniPID.setOutputLimits(0, 100);
     miniPID.setSetpointRange(50);
-    miniPID.setSetpoint(movedTarget);
-    miniPID.setOutputFilter(1);
+    miniPID.setOutputFilter(0.9);
   }
     
   void show(int x, int y) {
@@ -66,17 +67,20 @@ class Blob {
     line(center.x + 70, center.y + 130, other.center.x + 70, other.center.y + 130);
     pop();
     
-    float moveDelta = center.dist(other.center);
-    //if(moveDelta > 30){
-    movedTarget += moveDelta;
-    //}
+    float boundsShift = abs(other.minx - minx) + abs(other.miny - miny) + abs(other.maxx - maxx) + abs(other.maxy - maxy);
+    movedTarget += pow(boundsShift, 0.33) * 20; //<>//
     center = other.center;
+    
+    if(boundsShift > maxShift) {
+      maxShift = boundsShift;
+      println("max: " + boundsShift + ", or" +  pow(boundsShift, 0.33) * 10);
+    }
     
     minx = other.minx;
     maxx = other.maxx;
     miny = other.miny;
     maxy = other.maxy;
-    
+  
     points = other.points;
   }
 
@@ -94,7 +98,7 @@ class Blob {
     return new PVector(x,y); 
   }
   
-  float popDist(){
+  float getMovement(){
     miniPID.setP((double) kp);
     miniPID.setI((double) ki);
     miniPID.setD((double) kd);
