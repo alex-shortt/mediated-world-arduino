@@ -58,8 +58,9 @@ void processData(){
           uint8_t depth = getHexAt(tempChars, 6, 2);
           uint8_t movement = getHexAt(tempChars, 8, 2);
 
-          uint8_t hue = int(gHue + (id * 1.5));
-          uint8_t saturation = x;
+          gHue += int(movement / 255);
+          uint8_t hue = int(gHue + (id * 1.5) + (x / 255 * 8) + (y / 255 * 8));
+          uint8_t saturation = map(depth, 0, 255, 255, 0);
           uint8_t brightness = movement;
   
           for(byte i = 0; i < LEN3; i++){
