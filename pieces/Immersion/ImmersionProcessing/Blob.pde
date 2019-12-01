@@ -26,11 +26,11 @@ class Blob {
     points.add(new PVector(x, y, z));
     center = this.getCenter();
     
-    miniPID = new MiniPID(0.1, 0.01, 0.2);
-    miniPID.setOutputLimits(255);
-    miniPID.setSetpointRange(100);
+    miniPID = new MiniPID(kp, ki, kd);
+    miniPID.setOutputLimits(0, 100);
+    miniPID.setSetpointRange(50);
     miniPID.setSetpoint(movedTarget);
-    miniPID.setOutputFilter(5);
+    miniPID.setOutputFilter(1);
   }
     
   void show(int x, int y) {
@@ -56,13 +56,20 @@ class Blob {
     miny = min(miny, y);
     maxx = max(maxx, x);
     maxy = max(maxy, y);
+    center = this.getCenter();
   }
   
   void become(Blob other) {
+    push();
+    strokeWeight(10);
+    stroke(color(255, 0, 0));
+    line(center.x + 70, center.y + 130, other.center.x + 70, other.center.y + 130);
+    pop();
+    
     float moveDelta = center.dist(other.center);
-    if(moveDelta > 30){
-      movedTarget += moveDelta;
-    }
+    //if(moveDelta > 30){
+    movedTarget += moveDelta;
+    //}
     center = other.center;
     
     minx = other.minx;
@@ -88,6 +95,9 @@ class Blob {
   }
   
   float popDist(){
+    miniPID.setP((double) kp);
+    miniPID.setI((double) ki);
+    miniPID.setD((double) kd);
     double output = miniPID.getOutput(movedActual, movedTarget);
     movedActual += output;
     return (float) output;

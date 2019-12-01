@@ -5,8 +5,14 @@ SerialSelect serial;
 ControlP5 cp5;
 KinectBlobHandler kinectBlob;
 
+float kp = 0.045;
+float ki = 0.011;
+float kd = 0.27;
+
+float maxOutput = 0;
+
 void setup() {
-  size(700, 600);
+  size(700, 700);
 
   cp5 = new ControlP5(this);
   serial = new SerialSelect(this, cp5, 9600);
@@ -20,8 +26,8 @@ void draw() {
   serial.render(20, 20);
   
   // update and render kinect and blobs
-  kinectBlob.update();
   image(kinectBlob.getDepthImage(), 70, 130); 
+  kinectBlob.update();
   kinectBlob.render(70, 130);
   
   String message = processBlobData(kinectBlob.getBlobs());
@@ -29,6 +35,27 @@ void draw() {
   fill(color(255, 0, 0));
   //text(message, 250, 580);
   //serial.write(message);
+  
+  text("kp: " + kp, 70, 625);
+  text("ki: " + ki, 70, 650);
+  text("kd: " + kd, 70, 675);
+}
+
+// Adjust the angle and the depth threshold min and max
+void keyPressed() {
+  if (key == 'a') {
+    kp += 0.001;
+  } else if (key == 'z') {
+    kp -= 0.001;
+  } else if (key == 's') {
+    ki += 0.001;
+  } else if (key == 'x') {
+    ki -= 0.001;
+  } else if (key =='d') {
+    kd += 0.001;
+  } else if (key =='c') {
+    kd -= 0.001;
+  }
 }
 
 String processBlobData(ArrayList<Blob> blobs){
@@ -67,7 +94,11 @@ String processBlobData(ArrayList<Blob> blobs){
   //String posDeltaHex = String.format("%02X", posDelta);
   
   float pop = biggestBlob.popDist();
-  int mappedPop = int(map(pop, 0, 255, 0, kinectWidth));
+  if(pop > maxOutput) {
+    maxOutput = pop;
+    println(pop);
+  }
+  int mappedPop = int(map(pop, 0, 100, 0, kinectWidth));
   rect(70, 570, mappedPop, 20);
    
   return "";
