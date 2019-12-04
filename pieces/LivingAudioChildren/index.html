@@ -5,14 +5,15 @@
     <script src="scripts/p5.serialport.js"></script>
     <script src="scripts/sketch.js"></script>
     <div id="placard">
-      <h2>Living Audio Children</h2>
-      <p>
-        <i>Visual representation of audio as it exists in mediated.world</i>
-      </p>
+      <h1>Living Audio Children</h1>
     </div>
   </head>
   <body></body>
   <style>
+    html, body {
+      background: black;
+    }
+
     canvas {
       width: 100% !important;
       height: 100% !important;
@@ -20,6 +21,7 @@
     }
 
     #placard {
+      font-family: monospace;
       background: white;
       position: absolute;
       bottom: 6vh;

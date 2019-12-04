@@ -1,5 +1,5 @@
 let numBoxes = 11;
-const zoom = 35;
+const zoom = 50;
 let boxesX = [];
 
 let song;
@@ -45,7 +45,7 @@ function setup() {
 }
 
 function draw() {
-  background(255);
+  background(0);
   let level = mic.getLevel(0.3);
   rotBoost += level * level * 0.001;
   rotateY(frameCount * 0.004 + rotBoost);
