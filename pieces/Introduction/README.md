@@ -1,4 +1,4 @@
-# Immersion
+# Introduction
 Living with a new understanding of the same world
 
 ## Setup
