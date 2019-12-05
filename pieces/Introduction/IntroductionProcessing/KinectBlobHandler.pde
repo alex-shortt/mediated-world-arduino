@@ -2,7 +2,7 @@ import org.openkinect.processing.*;
 
 class KinectBlobHandler {
   Kinect2 kinect2;
-  int MAX_DEPTH = 1500; 
+  int MAX_DEPTH = 1500; //1500
   int MIN_DEPTH = 300;
   
   int blobCounter = 0;

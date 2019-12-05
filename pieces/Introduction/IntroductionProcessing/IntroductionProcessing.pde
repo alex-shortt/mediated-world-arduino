@@ -13,7 +13,7 @@ float maxOutput = 0;
 
 void setup() {
   size(700, 700);
-
+  
   cp5 = new ControlP5(this);
   serial = new SerialSelect(this, cp5, 9600);
   kinectBlob = new KinectBlobHandler(this);
