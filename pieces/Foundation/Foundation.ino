@@ -4,16 +4,16 @@
 #define FRAMES_PER_SECOND  120
 
 // Strip C
-#define LEN3 59
-CRGB leds3[LEN3]; 
+#define LEN3 60
+CRGB leds3[LEN3];
 
 // Strip B
 #define LEN5 60
-CRGB leds5[LEN5]; 
+CRGB leds5[LEN5];
 
 // Strip A
-#define LEN6 59
-CRGB leds6[LEN6]; 
+#define LEN6 60
+CRGB leds6[LEN6];
 
 uint8_t gHue = 0;
 
@@ -55,23 +55,23 @@ void processData(){
           uint8_t firstVal = getHexAt(tempChars, 1, 2);
           uint8_t secondVal = getHexAt(tempChars, 3, 2);
           uint8_t thirdVal = getHexAt(tempChars, 5, 2);
-  
+
           for(byte i = 0; i < LEN3; i++){
             leds3[i].setHSV(gHue, 255, 255);
             leds3[i].nscale8_video(firstVal);
-          } 
-  
+          }
+
           for(byte i = 0; i < LEN5; i++){
-            leds5[i].setHSV(gHue, 255, 255);  
+            leds5[i].setHSV(gHue + (255 / 3.0), 255, 255);
             leds5[i].nscale8_video(secondVal);
-          } 
-  
+          }
+
           for(byte i = 0; i < LEN6; i++){
-            leds6[i].setHSV(gHue, 255, 255);  
-            leds6[i].nscale8_video(thirdVal); 
+            leds6[i].setHSV(gHue + (255 * 2 / 3.0), 255, 255);
+            leds6[i].nscale8_video(thirdVal);
           }
         }
-        
+
         newData = false;
     }
 }
@@ -115,12 +115,12 @@ void recvWithStartEndMarkers() {
 uint8_t getHexAt(char message[], int p, int l) {
     char sub[4] = "000";
     substring(tempChars, sub, p, l);
-    return (uint8_t) strtol(sub, NULL, 16); 
+    return (uint8_t) strtol(sub, NULL, 16);
 }
 
 void substring(char s[], char sub[], int p, int l) {
    int c = 0;
-   
+
    while (c < l) {
       sub[c] = s[p+c-1];
       c++;
